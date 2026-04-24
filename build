@@ -71,3 +71,4 @@ makeCachebuster('src/honkalculate.html', 'dist/honkalculate.html');
 makeCachebuster('src/index.html', 'dist/index.html');
 makeCachebuster('src/randoms.html', 'dist/randoms.html');
 makeCachebuster('src/oms.html', 'dist/oms.html');
+makeCachebuster('src/champions.html', 'dist/champions.html');
