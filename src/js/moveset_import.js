@@ -73,6 +73,341 @@ $("#exportR").click(function () {
 	ExportPokemon($("#p2"));
 });
 
+// 收藏功能 - 直接从UI读取所有字段，绕过可能有bug的createPokemon和ExportPokemon
+function ExportPokemonToString(pokeInfo) {
+	// 获取宝可梦名称
+	var setName = pokeInfo.find("input.set-selector").val();
+	var pokemonName = setName;
+	if (setName && setName.indexOf("(") !== -1) {
+		pokemonName = setName.substring(0, setName.indexOf(" (")).trim();
+	}
+
+	// 开始构建导出文本
+	var finalText = checkExceptionsExport(pokemonName);
+
+	// 性别
+	var gender = pokeInfo.find(".gender").val();
+	if (gender && gender !== 'N') {
+		finalText += " (" + gender + ")";
+	}
+
+	// 持有物
+	var item = pokeInfo.find(".item").val();
+	if (item) {
+		finalText += " @ " + item;
+	}
+	finalText += "\n";
+
+	// 特性
+	var ability = pokeInfo.find(".ability").val();
+	if (ability) {
+		finalText += "Ability: " + ability + "\n";
+	}
+
+	// 等级
+	var level = pokeInfo.find(".level").val();
+	if (level && parseInt(level) !== 100) {
+		finalText += "Level: " + level + "\n";
+	}
+
+	// Tera类型 (第9世代)
+	if (typeof gen !== 'undefined' && gen === 9) {
+		var teraType = pokeInfo.find(".teraType").val();
+		if (teraType && teraType !== undefined) {
+			finalText += "Tera Type: " + teraType + "\n";
+		}
+	}
+
+	// EVs/SPs - 直接从UI读取（Champions模式使用sps，其他模式使用evs）
+	var EVs_Array = [];
+	var isChampionsMode = $("#champions").prop("checked");
+	var evClass = isChampionsMode ? ".sps" : ".evs";
+	var evLabel = isChampionsMode ? "SPs" : "EVs";
+	// 使用LEGACY_STATS，因为HTML的父元素class使用legacy格式（hp, at, df, sa, sd, sp）
+	var legacyStats = LEGACY_STATS[isChampionsMode ? 0 : 9];
+
+	for (var i = 0; i < legacyStats.length; i++) {
+		var legacyStat = legacyStats[i];
+		var stat = legacyStatToStat(legacyStat); // 转换为显示用的标准格式
+		var evVal = 0;
+		if (pokeInfo.find("." + legacyStat + " " + evClass).length > 0) {
+			evVal = parseInt(pokeInfo.find("." + legacyStat + " " + evClass).val()) || 0;
+		}
+		if (evVal > 0) {
+			EVs_Array.push(evVal + " " + calc.Stats.displayStat(stat));
+		}
+	}
+	if (EVs_Array.length > 0) {
+		finalText += evLabel + ": ";
+		finalText += serialize(EVs_Array, " / ");
+		finalText += "\n";
+	}
+
+	// 性格 - 直接从UI读取
+	var nature = pokeInfo.find(".nature").val();
+	if (nature) {
+		finalText += nature + " Nature\n";
+	}
+
+	// IVs - 直接从UI读取（使用相同的legacyStats）
+	var IVs_Array = [];
+	for (var i = 0; i < legacyStats.length; i++) {
+		var legacyStat = legacyStats[i];
+		var stat = legacyStatToStat(legacyStat);
+		var ivVal = 31; // 默认31
+		if (pokeInfo.find("." + legacyStat + " .ivs").length > 0) {
+			ivVal = parseInt(pokeInfo.find("." + legacyStat + " .ivs").val()) || 31;
+		}
+		if (ivVal < 31) {
+			IVs_Array.push(ivVal + " " + calc.Stats.displayStat(stat));
+		}
+	}
+	if (IVs_Array.length > 0) {
+		finalText += "IVs: ";
+		finalText += serialize(IVs_Array, " / ");
+		finalText += "\n";
+	}
+
+	// 招式
+	for (var i = 1; i <= 4; i++) {
+		var moveObj = pokeInfo.find(".move" + i + " select.move-selector");
+		if (moveObj.length > 0) {
+			var moveName = moveObj.val();
+			if (moveName && moveName !== "(No Move)") {
+				finalText += "- " + moveName + "\n";
+			}
+		}
+	}
+
+	return finalText.trim();
+}
+
+function addToFavorites(pokeInfo) {
+	// 导出当前配置为文本
+	var exportText = ExportPokemonToString(pokeInfo);
+
+	// 获取宝可梦名称
+	var pokemonName = pokeInfo.find(".set-selector").val();
+	if (pokemonName && pokemonName.indexOf("(") !== -1) {
+		pokemonName = pokemonName.substring(0, pokemonName.indexOf("(")).trim();
+	}
+
+	// 弹出对话框让用户输入收藏名称
+	var favoriteName = prompt("为这个配置起个名字:", pokemonName || "我的配置");
+	if (!favoriteName) return; // 用户取消
+
+	// 调用现有的 addSets 函数保存配置
+	addSets(exportText, favoriteName);
+
+	// 提示用户
+	alert("✅ 已收藏: " + favoriteName + "\n\n收藏的配置会出现在 " + pokemonName + " 的下拉菜单中");
+}
+
+$(document).ready(function () {
+	// 左侧收藏按钮
+	$("#favoriteL").click(function () {
+		addToFavorites($("#p1"));
+	});
+
+	// 右侧收藏按钮
+	$("#favoriteR").click(function () {
+		addToFavorites($("#p2"));
+	});
+
+	// 打开收藏管理界面
+	$("#manageFavorites").click(function () {
+		openFavoritesManager();
+	});
+
+	// 关闭收藏管理界面
+	$("#closeFavoritesModal").click(function () {
+		$("#favoritesModal").fadeOut(200);
+	});
+
+	// 清空所有收藏
+	$("#clearAllFavorites").click(function () {
+		if (!confirm("确定要清空所有收藏配置吗？此操作不可恢复！")) {
+			return;
+		}
+
+		localStorage.removeItem('customsets');
+
+		// 清空所有 SETDEX 对象中的自定义配置
+		var setdexObjects = [SETDEX_CHAMPIONS, SETDEX_SV, SETDEX_SS, SETDEX_SM, SETDEX_XY, SETDEX_BW, SETDEX_DPP, SETDEX_ADV, SETDEX_GSC, SETDEX_RBY];
+
+		// 获取所有自定义配置的宝可梦名称
+		if (localStorage.customsets) {
+			var customsets = JSON.parse(localStorage.customsets);
+			for (var pokemonName in customsets) {
+				for (var i = 0; i < setdexObjects.length; i++) {
+					if (setdexObjects[i][pokemonName]) {
+						delete setdexObjects[i][pokemonName];
+					}
+				}
+			}
+		}
+
+		alert("✅ 已清空所有收藏配置");
+		$("#favoritesModal").fadeOut(200);
+
+		// 刷新页面以更新下拉菜单
+		setTimeout(function() {
+			location.reload();
+		}, 300);
+	});
+});
+
+// 打开收藏管理器
+function openFavoritesManager() {
+	var customsets = localStorage.customsets ? JSON.parse(localStorage.customsets) : {};
+
+	if (Object.keys(customsets).length === 0) {
+		$("#favoritesList").html('<p style="text-align: center; color: #666; font-size: 18px;">暂无收藏配置</p>');
+	} else {
+		renderFavoritesList(customsets);
+	}
+
+	$("#favoritesModal").fadeIn(200);
+}
+
+// 渲染收藏列表
+function renderFavoritesList(customsets) {
+	var html = '<table style="width: 100%; border-collapse: collapse;">';
+	html += '<thead><tr style="background: #e0e0e0;">';
+	html += '<th style="padding: 12px; text-align: left; border-bottom: 2px solid #ccc;">宝可梦</th>';
+	html += '<th style="padding: 12px; text-align: left; border-bottom: 2px solid #ccc;">配置名称</th>';
+	html += '<th style="padding: 12px; text-align: left; border-bottom: 2px solid #ccc;">配置信息</th>';
+	html += '<th style="padding: 12px; text-align: center; border-bottom: 2px solid #ccc;">操作</th>';
+	html += '</tr></thead><tbody>';
+
+	var count = 0;
+	for (var pokemonName in customsets) {
+		var sets = customsets[pokemonName];
+		for (var setName in sets) {
+			if (!sets[setName].isCustomSet) continue;
+
+			var set = sets[setName];
+			count++;
+
+			var bgColor = count % 2 === 0 ? '#f9f9f9' : '#ffffff';
+
+			html += '<tr style="background: ' + bgColor + ';">';
+			html += '<td style="padding: 12px; border-bottom: 1px solid #ddd;"><strong>' + pokemonName + '</strong></td>';
+			html += '<td style="padding: 12px; border-bottom: 1px solid #ddd;" id="setName_' + count + '">' + setName + '</td>';
+
+			// 显示配置信息
+			var info = [];
+			if (set.ability) info.push('特性: ' + set.ability);
+			if (set.item) info.push('道具: ' + set.item);
+			if (set.nature) info.push('性格: ' + set.nature);
+			var moves = set.moves ? set.moves.filter(function(m) { return m && m !== '(No Move)'; }).join(', ') : '';
+			if (moves) info.push('招式: ' + moves.substring(0, 30) + (moves.length > 30 ? '...' : ''));
+
+			html += '<td style="padding: 12px; border-bottom: 1px solid #ddd; font-size: 12px; color: #666;">' + info.join('<br>') + '</td>';
+			html += '<td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">';
+			html += '<button onclick="renameFavorite(\'' + pokemonName + '\', \'' + setName.replace(/'/g, "\\'") + '\', ' + count + ')" style="padding: 6px 12px; margin-right: 5px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 12px;">✏️ 改名</button>';
+			html += '<button onclick="deleteSingleFavorite(\'' + pokemonName + '\', \'' + setName.replace(/'/g, "\\'") + '\')" style="padding: 6px 12px; cursor: pointer; background: #ff4444; color: white; border: none; border-radius: 4px; font-size: 12px;">🗑️ 删除</button>';
+			html += '</td></tr>';
+		}
+	}
+
+	html += '</tbody></table>';
+	html += '<p style="text-align: center; margin-top: 15px; color: #666;">共 ' + count + ' 个收藏配置</p>';
+
+	$("#favoritesList").html(html);
+}
+
+// 删除单个收藏
+function deleteSingleFavorite(pokemonName, setName) {
+	if (!confirm("确定要删除 \"" + setName + "\" 吗？")) {
+		return;
+	}
+
+	var customsets = JSON.parse(localStorage.customsets);
+
+	if (customsets[pokemonName] && customsets[pokemonName][setName]) {
+		delete customsets[pokemonName][setName];
+
+		// 如果该宝可梦没有其他收藏了，删除整个条目
+		if (Object.keys(customsets[pokemonName]).length === 0) {
+			delete customsets[pokemonName];
+		}
+
+		localStorage.customsets = JSON.stringify(customsets);
+
+		// 从所有 SETDEX 对象中删除
+		var setdexObjects = [SETDEX_CHAMPIONS, SETDEX_SV, SETDEX_SS, SETDEX_SM, SETDEX_XY, SETDEX_BW, SETDEX_DPP, SETDEX_ADV, SETDEX_GSC, SETDEX_RBY];
+		for (var i = 0; i < setdexObjects.length; i++) {
+			if (setdexObjects[i][pokemonName] && setdexObjects[i][pokemonName][setName]) {
+				delete setdexObjects[i][pokemonName][setName];
+			}
+		}
+
+		alert("✅ 已删除收藏: " + setName);
+
+		// 重新加载列表
+		openFavoritesManager();
+
+		// 刷新页面以更新下拉菜单
+		setTimeout(function() {
+			location.reload();
+		}, 100);
+	} else {
+		alert("❌ 未找到该收藏配置");
+	}
+}
+
+// 重命名收藏
+function renameFavorite(pokemonName, oldSetName, elementId) {
+	var newName = prompt("请输入新的配置名称:", oldSetName);
+	if (!newName || newName.trim() === "") {
+		return;
+	}
+
+	newName = newName.trim();
+
+	if (newName === oldSetName) {
+		return;
+	}
+
+	var customsets = JSON.parse(localStorage.customsets);
+
+	// 检查新名称是否已存在
+	if (customsets[pokemonName] && customsets[pokemonName][newName]) {
+		alert("❌ 配置名称 \"" + newName + "\" 已存在，请使用其他名称");
+		return;
+	}
+
+	// 重命名
+	if (customsets[pokemonName] && customsets[pokemonName][oldSetName]) {
+		customsets[pokemonName][newName] = customsets[pokemonName][oldSetName];
+		delete customsets[pokemonName][oldSetName];
+
+		localStorage.customsets = JSON.stringify(customsets);
+
+		// 更新所有 SETDEX 对象
+		var setdexObjects = [SETDEX_CHAMPIONS, SETDEX_SV, SETDEX_SS, SETDEX_SM, SETDEX_XY, SETDEX_BW, SETDEX_DPP, SETDEX_ADV, SETDEX_GSC, SETDEX_RBY];
+		for (var i = 0; i < setdexObjects.length; i++) {
+			if (setdexObjects[i][pokemonName] && setdexObjects[i][pokemonName][oldSetName]) {
+				setdexObjects[i][pokemonName][newName] = setdexObjects[i][pokemonName][oldSetName];
+				delete setdexObjects[i][pokemonName][oldSetName];
+			}
+		}
+
+		alert("✅ 已重命名为: " + newName);
+
+		// 重新加载列表
+		openFavoritesManager();
+
+		// 刷新页面以更新下拉菜单
+		setTimeout(function() {
+			location.reload();
+		}, 100);
+	} else {
+		alert("❌ 未找到该收藏配置");
+	}
+}
+
 function serialize(array, separator) {
 	var text = "";
 	for (var i = 0; i < array.length; i++) {
@@ -152,6 +487,7 @@ function getStats(currentPoke, rows, x) {
 			currentPoke.level = parseInt(currentRow[1].trim());
 			break;
 		case 'EVs':
+		case 'SPs':
 			for (j = 1; j < currentRow.length; j++) {
 				currentEV = currentRow[j].trim().split(" ");
 				currentEV[1] = statToLegacyStat(currentEV[1].toLowerCase());

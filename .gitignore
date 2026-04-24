@@ -9,3 +9,6 @@ Thumbs.db
 pnpm-debug.log
 npm-debug.log
 .vs/
+
+# Symbolic link to dist/calc (local development only)
+src/calc

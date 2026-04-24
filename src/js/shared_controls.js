@@ -1506,9 +1506,9 @@ $(".gen").change(function () {
 	$(".gen-specific.g" + gen).show();
 	$(".gen-specific").not(".g" + gen).hide();
 	$("input:radio[name='format']").change();
-	var typeOptions = getSelectOptions(Object.keys(typeChart));
+	var typeOptions = getSelectOptions(Object.keys(typeChart), false, null, 'types');
 	$("select.type1, select.move-type").find("option").remove().end().append(typeOptions);
-	$("select.teraType").find("option").remove().end().append(getSelectOptions(Object.keys(typeChart).slice(1)));
+	$("select.teraType").find("option").remove().end().append(getSelectOptions(Object.keys(typeChart).slice(1), false, null, 'types'));
 	$("select.type2").find("option").remove().end().append("<option value=\"\">(none)</option>" + typeOptions);
 	var moveOptions = getSelectOptions(Object.keys(moves), true, null, 'moves');
 	$("select.move-selector").find("option").remove().end().append(moveOptions);
@@ -1663,7 +1663,7 @@ function getSelectOptions(arr, sort, defaultOption, type) {
 	}
 	var r = '';
 	for (var i = 0; i < arr.length; i++) {
-		var displayText = type && window.i18n ? window.i18n.getDisplayText(type, arr[i]) : arr[i];
+		var displayText = type && window.i18n ? window.i18n.getDisplayText(type, arr[i], type !== 'types') : arr[i];
 		r += '<option value="' + arr[i] + '" ' + (defaultOption === i ? 'selected' : '') + '>' + displayText + '</option>';
 	}
 	return r;
@@ -1891,7 +1891,7 @@ $(document).ready(function () {
 		$("#importedSets").prop("checked", false);
 		loadDefaultLists();
 		$("input:radio[name='format']").change();
-		var typeOptions = getSelectOptions(Object.keys(typeChart));
+		var typeOptions = getSelectOptions(Object.keys(typeChart), false, null, 'types');
 		$("select.type1, select.move-type").find("option").remove().end().append(typeOptions);
 		$("select.type2").find("option").remove().end().append("<option value=\"\">(none)</option>" + typeOptions);
 		var moveOptions = getSelectOptions(Object.keys(moves), true, null, 'moves');
