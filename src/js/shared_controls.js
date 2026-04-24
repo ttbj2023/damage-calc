@@ -839,7 +839,7 @@ function showFormes(formeObj, pokemonName, pokemon, baseFormeName) {
 	var defaultForme = formes.indexOf(pokemonName);
 	if (defaultForme < 0) defaultForme = 0;
 
-	var formeOptions = getSelectOptions(formes, false, defaultForme);
+	var formeOptions = getSelectOptions(formes, false, defaultForme, 'species');
 	formeObj.children("select").find("option").remove().end().append(formeOptions).change();
 	formeObj.show();
 }
@@ -1510,11 +1510,11 @@ $(".gen").change(function () {
 	$("select.type1, select.move-type").find("option").remove().end().append(typeOptions);
 	$("select.teraType").find("option").remove().end().append(getSelectOptions(Object.keys(typeChart).slice(1)));
 	$("select.type2").find("option").remove().end().append("<option value=\"\">(none)</option>" + typeOptions);
-	var moveOptions = getSelectOptions(Object.keys(moves), true);
+	var moveOptions = getSelectOptions(Object.keys(moves), true, null, 'moves');
 	$("select.move-selector").find("option").remove().end().append(moveOptions);
-	var abilityOptions = getSelectOptions(abilities, true);
+	var abilityOptions = getSelectOptions(abilities, true, null, 'abilities');
 	$("select.ability").find("option").remove().end().append("<option value=\"\">(other)</option>" + abilityOptions);
-	var itemOptions = getSelectOptions(items, true);
+	var itemOptions = getSelectOptions(items, true, null, 'items');
 	$("select.item").find("option").remove().end().append("<option value=\"\">(none)</option>" + itemOptions);
 
 	$(".set-selector").val(getFirstValidSetOption().id);
@@ -1657,13 +1657,14 @@ function getSetOptions(sets) {
 	return setOptions;
 }
 
-function getSelectOptions(arr, sort, defaultOption) {
+function getSelectOptions(arr, sort, defaultOption, type) {
 	if (sort) {
 		arr.sort();
 	}
 	var r = '';
 	for (var i = 0; i < arr.length; i++) {
-		r += '<option value="' + arr[i] + '" ' + (defaultOption === i ? 'selected' : '') + '>' + arr[i] + '</option>';
+		var displayText = type && window.i18n ? window.i18n.getDisplayText(type, arr[i]) : arr[i];
+		r += '<option value="' + arr[i] + '" ' + (defaultOption === i ? 'selected' : '') + '>' + displayText + '</option>';
 	}
 	return r;
 }
@@ -1789,9 +1790,12 @@ function loadDefaultLists() {
 	$(".set-selector").select2({
 		formatResult: function (object) {
 			if ($("#randoms").prop("checked")) {
-				return object.pokemon;
+				// Show Chinese name with English for random battles
+				return i18n.getDisplayText('species', object.pokemon);
 			} else {
-				return object.set ? ("&nbsp;&nbsp;&nbsp;" + object.set) : ("<b>" + object.text + "</b>");
+				// Show Chinese name with English and set info
+				var pokemonName = i18n.getDisplayText('species', object.pokemon);
+				return object.set ? ("&nbsp;&nbsp;&nbsp;" + object.set) : ("<b>" + pokemonName + "</b>");
 			}
 		},
 		query: function (query) {
@@ -1801,8 +1805,12 @@ function loadDefaultLists() {
 			for (var i = 0; i < options.length; i++) {
 				var option = options[i];
 				var pokeName = option.pokemon.toUpperCase();
+				var pokeNameCN = i18n.getDisplayText('species', option.pokemon, false).toUpperCase();
+
 				if (!query.term || query.term.toUpperCase().split(" ").every(function (term) {
-					return pokeName.indexOf(term) === 0 || pokeName.indexOf("-" + term) >= 0 || pokeName.indexOf(" " + term) >= 0;
+					// Search in both English and Chinese names
+					return pokeName.indexOf(term) === 0 || pokeName.indexOf("-" + term) >= 0 || pokeName.indexOf(" " + term) >= 0 ||
+					       pokeNameCN.indexOf(term) !== -1;
 				})) {
 					if ($("#randoms").prop("checked")) {
 						if (option.id) results.push(option);
@@ -1886,11 +1894,11 @@ $(document).ready(function () {
 		var typeOptions = getSelectOptions(Object.keys(typeChart));
 		$("select.type1, select.move-type").find("option").remove().end().append(typeOptions);
 		$("select.type2").find("option").remove().end().append("<option value=\"\">(none)</option>" + typeOptions);
-		var moveOptions = getSelectOptions(Object.keys(moves), true);
+		var moveOptions = getSelectOptions(Object.keys(moves), true, null, 'moves');
 		$("select.move-selector").find("option").remove().end().append(moveOptions);
-		var abilityOptions = getSelectOptions(abilities, true);
+		var abilityOptions = getSelectOptions(abilities, true, null, 'abilities');
 		$("select.ability").find("option").remove().end().append("<option value=\"\">(other)</option>" + abilityOptions);
-		var itemOptions = getSelectOptions(items, true);
+		var itemOptions = getSelectOptions(items, true, null, 'items');
 		$("select.item").find("option").remove().end().append("<option value=\"\">(none)</option>" + itemOptions);
 
 		$(".set-selector").val(getFirstValidSetOption().id);
@@ -1908,8 +1916,14 @@ $(document).ready(function () {
 	$(".move-selector").select2({
 		dropdownAutoWidth: true,
 		matcher: function (term, text) {
+			// Get Chinese translation for comparison
+			var textCN = i18n.getDisplayText('moves', text, false).toUpperCase();
+			var termUpper = term.toUpperCase();
+
+			// Match in English or Chinese
 			// 2nd condition is for Hidden Power
-			return text.toUpperCase().indexOf(term.toUpperCase()) === 0 || text.toUpperCase().indexOf(" " + term.toUpperCase()) >= 0;
+			return text.toUpperCase().indexOf(termUpper) === 0 || text.toUpperCase().indexOf(" " + termUpper) >= 0 ||
+			       textCN.indexOf(termUpper) !== -1;
 		}
 	});
 	$(".set-selector").val(getFirstValidSetOption().id);
