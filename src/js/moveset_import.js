@@ -58,7 +58,8 @@ function ExportPokemon(pokeInfo) {
 	for (var i = 0; i < 4; i++) {
 		var moveName = pokemon.moves[i].name;
 		if (moveName !== "(No Move)") {
-			finalText += "- " + moveName + "\n";
+			var translatedMove = window.i18n ? window.i18n.translate('moves', moveName) : moveName;
+			finalText += "- " + translatedMove + "\n";
 		}
 	}
 	finalText = finalText.trim();

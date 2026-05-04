@@ -108,7 +108,9 @@ function performCalculations() {
 						while (data.length > 1) {
 							data.pop();
 						}
-						data.push(attacker.moves[n].name.replace("Hidden Power", "HP"));
+						var moveName = attacker.moves[n].name.replace("Hidden Power", "HP");
+						var translatedMove = window.i18n ? window.i18n.translate('moves', moveName) : moveName;
+						data.push(translatedMove);
 						data.push(minPercentage + " - " + maxPercentage + "%");
 						data.push(minPixels + " - " + maxPixels + "px");
 						data.push(attacker.moves[n].bp === 0 ? 'nice move' : (result.kochance(false).text || 'possibly the worst move ever'));

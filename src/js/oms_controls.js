@@ -284,7 +284,9 @@ function performCalculationsOM() {
 				result.rawDesc.defenderItem = result.defender.item;
 			}
 		}
-		$(resultLocations[0][i].move + " + label").text(p1.moves[i].name.replace("Hidden Power", "HP"));
+		var moveNameL = p1.moves[i].name.replace("Hidden Power", "HP");
+		var translatedMoveL = window.i18n ? window.i18n.translate('moves', moveNameL) : moveNameL;
+		$(resultLocations[0][i].move + " + label").text(translatedMoveL);
 		$(resultLocations[0][i].damage).text(result.moveDesc(notation));
 
 		// P2
@@ -309,7 +311,9 @@ function performCalculationsOM() {
 				result.rawDesc.defenderItem = result.defender.item;
 			}
 		}
-		$(resultLocations[1][i].move + " + label").text(p2.moves[i].name.replace("Hidden Power", "HP"));
+		var moveNameR = p2.moves[i].name.replace("Hidden Power", "HP");
+		var translatedMoveR = window.i18n ? window.i18n.translate('moves', moveNameR) : moveNameR;
+		$(resultLocations[1][i].move + " + label").text(translatedMoveR);
 		$(resultLocations[1][i].damage).text(result.moveDesc(notation));
 
 		// BOTH
