@@ -2247,7 +2247,11 @@ window.zhCN = {
     "v-create": "Ｖ热焰",
     "wake-upslap": "唤醒巴掌",
     "will-o-wisp": "鬼火",
-    "x-scissor": "十字剪"
+    "x-scissor": "十字剪",
+    "bloodmoon": "血月",
+    "ivycudgel": "棘藤棒",
+    "matchagotcha": "刷刷茶炮",
+    "syrupbomb": "糖浆炸弹"
 },
     abilities: {
                                                 "Soul-Heart": "灵魂之心",
