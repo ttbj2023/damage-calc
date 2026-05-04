@@ -37,7 +37,7 @@
 
 <body class="dark-theme">
 
-<header>
+<header style="display:none">
     <div class="nav-wrapper"><ul class="nav">
         <li><a class="button nav-first" href="//pokemonshowdown.com/"><img src="./img/pokemonshowdownbeta.png" srcset="./img/pokemonshowdownbeta.png 1x, ./img/pokemonshowdownbeta@2x.png 2x" alt="Pok&eacute;mon Showdown" width="146" height="44" /> Home</a></li>
         <li><a class="button" href="//pokemonshowdown.com/dex/">Pok&eacute;dex</a></li>
@@ -73,11 +73,11 @@
         <span class="modeSelection" aria-labelledby="selectModeInstruction" role="radiogroup" title="Select the calculator's mode of function.">
             <span class="visually-hidden" id="selectModeInstruction">Select the calculator's mode of function.</span>
             <input class="mode visually-hidden" type="radio" name="mode" id="one-vs-one" checked="checked" /><label class="btn btn-left btn-wide" for="one-vs-one">One vs One</label>
-            <input class="mode visually-hidden" type="radio" name="mode" id="one-vs-all" /><label class="btn btn-mid btn-wide gen-specific g3 g4 g5 g6 g7 g8 g9" for="one-vs-all">One vs All</label>
-            <input class="mode visually-hidden" type="radio" name="mode" id="all-vs-one" /><label class="btn btn-mid btn-wide gen-specific g3 g4 g5 g6 g7 g8 g9" for="all-vs-one">All vs One</label>
+            <input class="mode visually-hidden" type="radio" name="mode" id="one-vs-all" style="display:none" /><label class="btn btn-mid btn-wide gen-specific g3 g4 g5 g6 g7 g8 g9" style="display:none" for="one-vs-all">One vs All</label>
+            <input class="mode visually-hidden" type="radio" name="mode" id="all-vs-one" style="display:none" /><label class="btn btn-mid btn-wide gen-specific g3 g4 g5 g6 g7 g8 g9" style="display:none" for="all-vs-one">All vs One</label>
             <input class="mode visually-hidden" type="radio" name="mode" id="champions" /><label class="btn btn-mid btn-wide" for="champions">Champions</label>
-            <input class="mode visually-hidden" type="radio" name="mode" id="randoms" /><label class="btn btn-mid btn-wide" for="randoms">Random Battles</label>
-            <input class="mode visually-hidden" type="radio" name="mode" id="oms" /><label class="btn btn-right btn-wide" for="oms">Other Metagames</label>
+            <input class="mode visually-hidden" type="radio" name="mode" id="randoms" style="display:none" /><label class="btn btn-mid btn-wide" style="display:none" for="randoms">Random Battles</label>
+            <input class="mode visually-hidden" type="radio" name="mode" id="oms" style="display:none" /><label class="btn btn-right btn-wide" style="display:none" for="oms">Other Metagames</label>
         </span>
     </div>
     <hr />
